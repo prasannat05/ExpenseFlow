@@ -253,11 +253,23 @@ canvas{max-width:100%}
       <div class="form-row" style="margin-bottom:10px">
         <div><label class="form-label">Timeframe</label>
           <select class="form-control" id="filterTime">
-            <option value="ALL">All Time</option><option value="TODAY">Today</option><option value="YESTERDAY">Yesterday</option>
-            <option value="THIS_WEEK">This Week</option><option value="THIS_MONTH" selected>This Month</option>
-            <option value="THIS_YEAR">This Year</option><option value="LAST_7">Last 7 Days</option>
-            <option value="LAST_30">Last 30 Days</option><option value="LAST_90">Last 90 Days</option>
-            <option value="LAST_365">Last 365 Days</option><option value="CUSTOM">Custom Range</option>
+            <option value="ALL">All Time</option>
+            <option value="TODAY">Today</option>
+            <option value="YESTERDAY">Yesterday</option>
+            <option value="THIS_WEEK">This Week</option>
+            <option value="LAST_WEEK">Last Week</option>
+            <option value="THIS_MONTH" selected>This Month</option>
+            <option value="LAST_MONTH">Last Month</option>
+            <option value="THIS_YEAR">This Year</option>
+            <option value="LAST_7">Last 7 Days</option>
+            <option value="LAST_14">Last 14 Days</option>
+            <option value="LAST_30">Last 30 Days</option>
+            <option value="LAST_60">Last 60 Days</option>
+            <option value="LAST_90">Last 90 Days</option>
+            <option value="LAST_180">Last 180 Days</option>
+            <option value="LAST_365">Last 365 Days</option>
+            <option value="N_DAYS">N Days</option>
+            <option value="CUSTOM">Custom Range</option>
           </select>
         </div>
         <div><label class="form-label">Type</label>
@@ -272,24 +284,42 @@ canvas{max-width:100%}
         <div><label class="form-label">From</label><input type="date" class="form-control" id="filterDateFrom"></div>
         <div><label class="form-label">To</label><input type="date" class="form-control" id="filterDateTo"></div>
       </div>
+      <div class="form-group" id="historyNDaysRow" style="display:none;margin-bottom:10px">
+        <label class="form-label">Last N Days [number input]</label>
+        <input type="number" class="form-control" id="historyNDaysInput" value="45" min="1">
+      </div>
+      <div id="historyDateError" style="color:var(--danger);font-size:.78rem;font-weight:700;display:none;margin-bottom:8px"></div>
       <div class="form-row" style="margin-bottom:10px">
         <div><label class="form-label">Wallet</label>
           <select class="form-control" id="filterWallet"><option value="ALL">All Wallets</option><option value="cash">💵 Hand Cash</option><option value="bank">🏦 Bank Savings</option><option value="savings">🐖 Savings Vault</option></select>
         </div>
         <div><label class="form-label">Category / Source</label><select class="form-control" id="filterCategory"><option value="ALL">All</option></select></div>
       </div>
-      <div class="form-row" style="margin-bottom:4px">
+      <div class="form-row" style="margin-bottom:10px">
         <div><label class="form-label">Amount Min</label><input type="number" class="form-control" id="filterAmountMin" placeholder="0"></div>
         <div><label class="form-label">Amount Max</label><input type="number" class="form-control" id="filterAmountMax" placeholder="Any"></div>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom:10px">
         <label class="form-label">Sort</label>
         <select class="form-control" id="sortOrder">
           <option value="NEWEST">Newest First</option><option value="OLDEST">Oldest First</option>
           <option value="AMOUNT_HIGH">Highest Amount</option><option value="AMOUNT_LOW">Lowest Amount</option>
         </select>
       </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <button class="btn-secondary" id="resetFiltersBtn" style="padding:7px 14px;font-size:.82rem">🔄 Reset Filters</button>
+        <span id="txCountIndicator" style="font-size:.82rem;color:var(--text-muted);font-weight:700">Showing 0 of 0 transactions</span>
+      </div>
     </div>
+    
+    <div class="card" id="historyBalanceCard" style="display:none;padding:12px;font-size:.85rem">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span>Opening Balance: <strong id="histOpeningBal">₹0</strong></span>
+        <span>Period Net: <strong id="histPeriodNet">₹0</strong></span>
+        <span>Closing Balance: <strong id="histClosingBal">₹0</strong></span>
+      </div>
+    </div>
+
     <div class="transactions-list" id="fullTxList"></div>
     <div class="pagination" id="txPagination"></div>
   </section>
@@ -297,14 +327,80 @@ canvas{max-width:100%}
   <!-- ANALYTICS -->
   <section id="panelAnalytics" class="tab-panel">
     <div class="card">
-      <div class="tab-sub" id="analyticsRangeTabs">
-        <button class="btn-secondary active-choice" data-range="THIS_MONTH">This Month</button>
-        <button class="btn-secondary" data-range="LAST_7">7 Days</button>
-        <button class="btn-secondary" data-range="LAST_30">30 Days</button>
-        <button class="btn-secondary" data-range="LAST_90">90 Days</button>
-        <button class="btn-secondary" data-range="LAST_365">365 Days</button>
-        <button class="btn-secondary" data-range="ALL">All Time</button>
+      <div class="card-title" style="margin-bottom:12px">📈 Analytics Filters &amp; Range</div>
+      <div class="form-row" style="margin-bottom:10px">
+        <div>
+          <label class="form-label">Timeframe</label>
+          <select class="form-control" id="analyticsTimeframe">
+            <option value="TODAY">Today</option>
+            <option value="YESTERDAY">Yesterday</option>
+            <option value="THIS_WEEK">This Week</option>
+            <option value="LAST_WEEK">Last Week</option>
+            <option value="THIS_MONTH" selected>This Month</option>
+            <option value="LAST_MONTH">Last Month</option>
+            <option value="THIS_YEAR">This Year</option>
+            <option value="LAST_7">Last 7 Days</option>
+            <option value="LAST_14">Last 14 Days</option>
+            <option value="LAST_30">Last 30 Days</option>
+            <option value="LAST_60">Last 60 Days</option>
+            <option value="LAST_90">Last 90 Days</option>
+            <option value="LAST_180">Last 180 Days</option>
+            <option value="LAST_365">Last 365 Days</option>
+            <option value="N_DAYS">N Days</option>
+            <option value="CUSTOM">Custom Range</option>
+            <option value="ALL">All Time</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Transaction Type</label>
+          <select class="form-control" id="analyticsFilterType">
+            <option value="ALL">All</option>
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+            <option value="transfer">Transfer</option>
+            <option value="savings_deposit">Savings Deposit</option>
+            <option value="savings_withdrawal">Savings Withdrawal</option>
+          </select>
+        </div>
       </div>
+
+      <div class="form-row" style="margin-bottom:10px">
+        <div>
+          <label class="form-label">Wallet</label>
+          <select class="form-control" id="analyticsFilterWallet">
+            <option value="ALL">All</option>
+            <option value="cash">💵 Hand Cash</option>
+            <option value="bank">🏦 Bank Savings</option>
+            <option value="savings">🐖 Savings Vault</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Category / Source</label>
+          <select class="form-control" id="analyticsFilterCategory">
+            <option value="ALL">All</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row" id="analyticsCustomDateRow" style="display:none;margin-bottom:10px">
+        <div><label class="form-label">From [date]</label><input type="date" class="form-control" id="analyticsDateFrom"></div>
+        <div><label class="form-label">To [date]</label><input type="date" class="form-control" id="analyticsDateTo"></div>
+      </div>
+
+      <div class="form-group" id="analyticsNDaysRow" style="display:none;margin-bottom:10px">
+        <label class="form-label">Last N Days [number input]</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.82rem;color:var(--text-muted);white-space:nowrap">Last N Days:</span>
+          <input type="number" class="form-control" id="analyticsNDaysInput" value="45" min="1">
+        </div>
+      </div>
+
+      <div id="analyticsErrorMsg" style="color:var(--danger);font-size:.8rem;font-weight:700;display:none;margin-top:4px"></div>
+    </div>
+
+    <div class="card" id="analyticsComparisonCard" style="display:none">
+      <div class="card-title" style="margin-bottom:10px">⚖️ Period Comparison (<span id="analyticsCmpLabel">Previous Period</span>)</div>
+      <div class="stat-mini-grid" id="analyticsComparisonGrid"></div>
     </div>
 
     <div class="card">
@@ -355,6 +451,7 @@ canvas{max-width:100%}
           <select class="form-control" id="reportType">
             <option value="DAILY">Daily</option><option value="WEEKLY">Weekly</option>
             <option value="MONTHLY" selected>Monthly</option><option value="YEARLY">Yearly</option>
+            <option value="N_DAYS">N Days</option>
             <option value="CUSTOM">Custom Range</option><option value="CATEGORY">Category</option>
             <option value="WALLET">Wallet</option><option value="INCOME">Income</option>
             <option value="EXPENSE">Expense</option><option value="SAVINGS">Savings</option>
@@ -364,9 +461,14 @@ canvas{max-width:100%}
         <div style="display:flex;align-items:flex-end"><button class="btn-primary" id="generateReportBtn">Generate</button></div>
       </div>
       <div class="form-row" id="reportCustomRange" style="display:none;margin-bottom:10px">
-        <div><label class="form-label">From</label><input type="date" class="form-control" id="reportDateFrom"></div>
-        <div><label class="form-label">To</label><input type="date" class="form-control" id="reportDateTo"></div>
+        <div><label class="form-label">From [date]</label><input type="date" class="form-control" id="reportDateFrom"></div>
+        <div><label class="form-label">To [date]</label><input type="date" class="form-control" id="reportDateTo"></div>
       </div>
+      <div class="form-group" id="reportNDaysRow" style="display:none;margin-bottom:10px">
+        <label class="form-label">Last N Days [number input]</label>
+        <input type="number" class="form-control" id="reportNDaysInput" value="45" min="1">
+      </div>
+      <div id="reportErrorMsg" style="color:var(--danger);font-size:.78rem;font-weight:700;display:none;margin-bottom:8px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-secondary" onclick="window.print()">🖨️ Print</button>
         <button class="btn-secondary" id="exportCsvBtn">📥 Export CSV</button>
@@ -494,7 +596,7 @@ canvas{max-width:100%}
     <div class="card-header"><div class="card-title">⚙️ Settings &amp; Data</div><button class="icon-btn" id="closeSettingsModalBtn">✕</button></div>
     <div style="display:flex;flex-direction:column;gap:14px">
       <div><label class="form-label">Theme</label>
-        <select class="form-control" id="settingTheme"><option value="dark">🌙 Dark</option><option value="light">☀️ Light</option></select>
+        <select class="form-control" id="settingTheme"><option value="dark">🌙 Dark</option><option value="light">☀️️ Light</option></select>
       </div>
       <div><label class="form-label">Currency Symbol</label><input type="text" class="form-control" id="settingCurrency" maxlength="3"></div>
       <div class="form-row">
@@ -614,6 +716,135 @@ class ConfirmDialog{
 }
 
 // ---------------------------------------------------------------------
+// Unified Consistent Date Filtering Engine
+// ---------------------------------------------------------------------
+class DateFilterEngine {
+  static getRange(timeframe, customFrom, customTo, nDays) {
+    const now = new Date();
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+
+    let start = new Date(0);
+    let end = todayEnd;
+
+    switch(timeframe) {
+      case 'TODAY':
+        start = todayStart;
+        break;
+      case 'YESTERDAY': {
+        const yStart = new Date(todayStart); yStart.setDate(yStart.getDate() - 1);
+        const yEnd = new Date(todayEnd); yEnd.setDate(yEnd.getDate() - 1);
+        start = yStart; end = yEnd;
+        break;
+      }
+      case 'THIS_WEEK': {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+        start = new Date(now.getFullYear(), now.getMonth(), diff);
+        start.setHours(0,0,0,0);
+        end = todayEnd;
+        break;
+      }
+      case 'LAST_WEEK': {
+        const day = now.getDay();
+        const diffToThisMon = now.getDate() - day + (day === 0 ? -6 : 1);
+        const lastMon = new Date(now.getFullYear(), now.getMonth(), diffToThisMon - 7);
+        lastMon.setHours(0,0,0,0);
+        const lastSun = new Date(lastMon);
+        lastSun.setDate(lastSun.getDate() + 6);
+        lastSun.setHours(23,59,59,999);
+        start = lastMon; end = lastSun;
+        break;
+      }
+      case 'THIS_MONTH':
+        start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        end = todayEnd;
+        break;
+      case 'LAST_MONTH':
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        break;
+      case 'THIS_YEAR':
+        start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        end = todayEnd;
+        break;
+      case 'LAST_7': {
+        const d = new Date(todayStart); d.setDate(d.getDate() - 7);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'LAST_14': {
+        const d = new Date(todayStart); d.setDate(d.getDate() - 14);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'LAST_30': {
+        const d = new Date(todayStart); d.setDate(d.getDate() - 30);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'LAST_60': {
+        const d = new Date(todayStart); d.setDate(d.getDate() - 60);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'LAST_90': {
+        const d = new Date(todayStart); d.setDate(d.getDate() - 90);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'LAST_180': {
+        const d = new Date(todayStart); d.setDate(d.getDate() - 180);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'LAST_365': {
+        const d = new Date(todayStart); d.setDate(d.getDate() - 365);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'N_DAYS': {
+        const n = parseInt(nDays) || 45;
+        const d = new Date(todayStart); d.setDate(d.getDate() - n);
+        start = d; end = todayEnd;
+        break;
+      }
+      case 'CUSTOM':
+        if (customFrom) {
+          start = new Date(customFrom);
+          start.setHours(0,0,0,0);
+        }
+        if (customTo) {
+          end = new Date(customTo);
+          end.setHours(23,59,59,999);
+        }
+        break;
+      case 'ALL':
+      default:
+        start = new Date(0);
+        end = new Date(8640000000000000);
+        break;
+    }
+    return { start, end };
+  }
+
+  static matches(dateStr, timeframe, customFrom, customTo, nDays) {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const { start, end } = this.getRange(timeframe, customFrom, customTo, nDays);
+    return d >= start && d <= end;
+  }
+
+  static getPreviousRange(timeframe, customFrom, customTo, nDays) {
+    const { start, end } = this.getRange(timeframe, customFrom, customTo, nDays);
+    const durationMs = end.getTime() - start.getTime();
+    const prevEnd = new Date(start.getTime() - 1);
+    const prevStart = new Date(prevEnd.getTime() - durationMs);
+    return { start: prevStart, end: prevEnd };
+  }
+}
+
+// ---------------------------------------------------------------------
 // Storage + Migration
 // ---------------------------------------------------------------------
 class StorageService{
@@ -622,8 +853,8 @@ class StorageService{
       _schemaVersion: 2,
       income: [],
       expenses: [],
-      ledger: [],            // NEW: transfers + savings deposits/withdrawals
-      wallets: { cash:0, bank:0, savings:0 }, // cached snapshot (recomputed on load/save)
+      ledger: [],
+      wallets: { cash:0, bank:0, savings:0 },
       settings: {
         currency: '₹',
         theme: 'dark',
@@ -645,17 +876,13 @@ class StorageService{
     };
   }
 
-  // Converts a legacy paymentMethod string into a wallet id without any data loss.
   static mapPaymentToWallet(pm){
     if(!pm) return 'cash';
     const p = String(pm).toLowerCase();
     if(p === 'cash') return 'cash';
-    return 'bank'; // GPay / PhonePe / Bank all funnel into the Bank Savings wallet
+    return 'bank';
   }
 
-  // Upgrades ANY older ExpenseFlow JSON (whole app state or a raw backup file)
-  // into the current schema. Never removes fields, never regenerates ids,
-  // never drops transactions. Missing new fields are filled with sensible defaults.
   static migrateData(raw){
     const defaults = this.defaultState();
     if(!raw || typeof raw !== 'object') return defaults;
@@ -670,7 +897,6 @@ class StorageService{
       budget: { ...defaults.budget, ...(raw.budget||{}) },
       wallets: { ...defaults.wallets, ...(raw.wallets||{}) }
     };
-    // Old backups won't have this flag — default Savings to excluded from Total Balance.
     if(data.settings.includeSavingsInBalance === undefined){
       data.settings.includeSavingsInBalance = false;
     }
@@ -681,7 +907,7 @@ class StorageService{
 
     const nowIso = new Date().toISOString();
     const fillCommon = (t)=>{
-      if(!t.id) t.id = 'tx_'+Date.now()+'_'+Math.random().toString(36).substr(2,6); // never reassign existing ids
+      if(!t.id) t.id = 'tx_'+Date.now()+'_'+Math.random().toString(36).substr(2,6);
       if(!t.wallet) t.wallet = this.mapPaymentToWallet(t.paymentMethod);
       if(!t.paymentMethod){
         t.paymentMethod = t.wallet === 'cash' ? 'Cash' : (t.wallet === 'bank' ? 'Bank' : 'Cash');
@@ -713,8 +939,6 @@ class StorageService{
     return data;
   }
 
-  // Wallet balances are always derived fresh from starting balances + full
-  // transaction history, so edits/deletes/imports can never desync balances.
   static recomputeWallets(data){
     const w = {
       cash: Number(data.settings.startingCash)||0,
@@ -749,11 +973,11 @@ class StorageService{
       }
       const parsed = JSON.parse(rawStr);
       const migrated = this.migrateData(parsed);
-      this.save(migrated); // persist upgraded schema in-place, non-destructively
+      this.save(migrated);
       return migrated;
     }catch(e){
       console.error("Storage load failed:",e);
-      ToastManager.show("Could not read saved data — starting fresh session (existing file untouched).","error");
+      ToastManager.show("Could not read saved data — starting fresh session.","error");
       return this.defaultState();
     }
   }
@@ -792,7 +1016,6 @@ class AppController{
   constructor(){
     this.data = StorageService.load();
     this.activeTab = 'panelDashboard';
-    this.analyticsRange = 'THIS_MONTH';
     this.charts = {};
     this.historyPage = 1;
     this.pageSize = 15;
@@ -813,7 +1036,6 @@ class AppController{
     return cur + Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
   }
 
-  // ---- Theming ----
   applyTheme(theme, save=true){
     this.data.theme = theme; this.data.settings.theme = theme;
     document.body.setAttribute('data-theme', theme);
@@ -827,8 +1049,6 @@ class AppController{
     ToastManager.show(`Switched to ${next} mode`,'info');
   }
 
-  // Savings Vault is locked money — excluded from Total Balance unless the
-  // user explicitly opts in. Net Worth always includes it regardless.
   toggleSavingsVisibility(){
     const next = !this.data.settings.includeSavingsInBalance;
     this.data.settings.includeSavingsInBalance = next;
@@ -837,9 +1057,7 @@ class AppController{
     ToastManager.show(next ? 'Savings Vault included in Total Balance' : 'Savings Vault excluded from Total Balance','info');
   }
 
-  // ---- Dropdown population ----
   populateSelects(){
-    const catSelects = ['txCategory','catBudgetSelect','filterCategory'];
     const cats = this.data.settings.categories;
     const srcs = this.data.settings.sources;
 
@@ -859,24 +1077,28 @@ class AppController{
         '<optgroup label="Income Sources">' + srcs.map(s=>`<option value="src:${s}">${s}</option>`).join('') + '</optgroup>';
     }
 
-    const srcSelect = document.getElementById('txSource');
-    if(srcSelect) srcSelect.innerHTML = srcs.map(s=>`${''}<option value="${s}">${SOURCE_ICONS[s]||'🔖'} ${s}</option>`).join('');
+    const analyticsFilterCatEl = document.getElementById('analyticsFilterCategory');
+    if(analyticsFilterCatEl){
+      analyticsFilterCatEl.innerHTML = '<option value="ALL">All</option>' +
+        '<optgroup label="Expense Categories">' + cats.map(c=>`<option value="cat:${c}">${c}</option>`).join('') + '</optgroup>' +
+        '<optgroup label="Income Sources">' + srcs.map(s=>`<option value="src:${s}">${s}</option>`).join('') + '</optgroup>';
+    }
 
-    // Quick add row (first 5 categories as quick pills)
+    const srcSelect = document.getElementById('txSource');
+    if(srcSelect) srcSelect.innerHTML = srcs.map(s=>`<option value="${s}">${SOURCE_ICONS[s]||'🔖'} ${s}</option>`).join('');
+
     const quickRow = document.getElementById('quickAddRow');
     if(quickRow){
       const quickDefs = [
         ['Tea Shop',20],['Outside Food',150],['Instamart',250],['Xerox',30],['Travel',50],['Recharge',199]
-      ].filter(([c])=>cats.includes(c) || true);
+      ];
       quickRow.innerHTML = quickDefs.map(([c,amt])=>`<button class="quick-pill" onclick="App.openQuickExpense('${c}',${amt})">${CATEGORY_ICONS[c]||'🔖'} ${c} (₹${amt})</button>`).join('');
     }
 
-    // Category budget dropdown label prettified already; wallet budget static in HTML
     const catBudgetList = document.getElementById('catBudgetSelect');
     if(catBudgetList) catBudgetList.innerHTML = cats.map(c=>`<option value="${c}">${c}</option>`).join('');
   }
 
-  // ---- Event wiring ----
   setupEventHandlers(){
     document.getElementById('themeToggle').addEventListener('click',()=>this.toggleTheme());
     document.getElementById('settingTheme').addEventListener('change',e=>this.applyTheme(e.target.value));
@@ -897,18 +1119,32 @@ class AppController{
 
     document.getElementById('txForm').addEventListener('submit',e=>this.handleTxFormSubmit(e));
 
-    ['searchKeyword','filterType','filterWallet','filterCategory','filterAmountMin','filterAmountMax','sortOrder','filterDateFrom','filterDateTo'].forEach(id=>{
-      document.getElementById(id).addEventListener('input',()=>{ this.historyPage=1; this.renderTransactionHistory(); });
+    // History filter events
+    ['searchKeyword','filterType','filterWallet','filterCategory','filterAmountMin','filterAmountMax','sortOrder','filterDateFrom','filterDateTo','historyNDaysInput'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input',()=>{ this.historyPage=1; this.renderTransactionHistory(); });
     });
+    
     document.getElementById('filterTime').addEventListener('change',e=>{
-      document.getElementById('customDateRow').style.display = e.target.value==='CUSTOM' ? 'grid':'none';
+      const val = e.target.value;
+      document.getElementById('customDateRow').style.display = val==='CUSTOM' ? 'grid':'none';
+      document.getElementById('historyNDaysRow').style.display = val==='N_DAYS' ? 'block':'none';
       this.historyPage=1; this.renderTransactionHistory();
     });
 
-    document.getElementById('analyticsRangeTabs').addEventListener('click',e=>{
-      const btn = e.target.closest('button[data-range]'); if(!btn) return;
-      this.analyticsRange = btn.getAttribute('data-range');
-      document.querySelectorAll('#analyticsRangeTabs button').forEach(b=>b.classList.toggle('active-choice', b===btn));
+    document.getElementById('resetFiltersBtn').addEventListener('click',()=>this.resetHistoryFilters());
+
+    // Analytics filter events
+    ['analyticsTimeframe','analyticsFilterType','analyticsFilterWallet','analyticsFilterCategory','analyticsDateFrom','analyticsDateTo','analyticsNDaysInput'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input',()=>{ this.renderAnalytics(); });
+      if(el && el.tagName==='SELECT') el.addEventListener('change',()=>{ this.renderAnalytics(); });
+    });
+
+    document.getElementById('analyticsTimeframe').addEventListener('change',e=>{
+      const val = e.target.value;
+      document.getElementById('analyticsCustomDateRow').style.display = val==='CUSTOM' ? 'grid':'none';
+      document.getElementById('analyticsNDaysRow').style.display = val==='N_DAYS' ? 'block':'none';
       this.renderAnalytics();
     });
 
@@ -958,7 +1194,9 @@ class AppController{
     });
 
     document.getElementById('reportType').addEventListener('change',e=>{
-      document.getElementById('reportCustomRange').style.display = e.target.value==='CUSTOM' ? 'grid':'none';
+      const val = e.target.value;
+      document.getElementById('reportCustomRange').style.display = val==='CUSTOM' ? 'grid':'none';
+      document.getElementById('reportNDaysRow').style.display = val==='N_DAYS' ? 'block':'none';
     });
     document.getElementById('generateReportBtn').addEventListener('click',()=>this.renderReports());
     document.getElementById('exportCsvBtn').addEventListener('click',()=>this.exportCSV());
@@ -988,6 +1226,26 @@ class AppController{
     });
   }
 
+  resetHistoryFilters(){
+    document.getElementById('searchKeyword').value = '';
+    document.getElementById('filterTime').value = 'THIS_MONTH';
+    document.getElementById('filterType').value = 'ALL';
+    document.getElementById('filterWallet').value = 'ALL';
+    document.getElementById('filterCategory').value = 'ALL';
+    document.getElementById('filterAmountMin').value = '';
+    document.getElementById('filterAmountMax').value = '';
+    document.getElementById('sortOrder').value = 'NEWEST';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('historyNDaysInput').value = '45';
+    document.getElementById('customDateRow').style.display = 'none';
+    document.getElementById('historyNDaysRow').style.display = 'none';
+    document.getElementById('historyDateError').style.display = 'none';
+    this.historyPage = 1;
+    this.renderTransactionHistory();
+    ToastManager.show("Filters reset to default","info");
+  }
+
   switchTab(targetId){
     this.activeTab = targetId;
     document.querySelectorAll('.tab-btn').forEach(btn=>btn.classList.toggle('active', btn.getAttribute('data-target')===targetId));
@@ -997,7 +1255,6 @@ class AppController{
     else if(targetId==='panelBudget') this.renderBudgetPanel();
   }
 
-  // ---- Transaction Modal ----
   setModalType(type){
     document.getElementById('txType').value = type;
     document.querySelectorAll('.type-tab-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('data-type')===type));
@@ -1088,7 +1345,6 @@ class AppController{
     else if(type==='savings_deposit') wallet = document.getElementById('txDepositFrom').value;
     else if(type==='savings_withdrawal') toWallet = document.getElementById('txWithdrawTo').value;
 
-    // Guard against overdrawing a wallet (soft warning, still allowed for backdated corrections)
     const nowIso = new Date().toISOString();
     const txObj = {
       id: id || 'tx_'+Date.now()+'_'+Math.random().toString(36).substr(2,6),
@@ -1107,7 +1363,6 @@ class AppController{
       txObj.paymentMethod = wallet==='cash' ? 'Cash' : 'Bank';
     }
 
-    // Remove old record with this id from all arrays (in case type changed), preserving createdAt
     let previousCreatedAt = null;
     if(id){
       const existing = [...this.data.expenses,...this.data.income,...this.data.ledger].find(t=>t.id===id);
@@ -1120,7 +1375,7 @@ class AppController{
 
     if(type==='expense') this.data.expenses.push(txObj);
     else if(type==='income') this.data.income.push(txObj);
-    else this.data.ledger.push(txObj); // transfer, savings_deposit, savings_withdrawal
+    else this.data.ledger.push(txObj);
 
     this.persist();
     this.closeTxModal();
@@ -1159,7 +1414,6 @@ class AppController{
     if(item) this.openTxModal(item);
   }
 
-  // ---- Data access helpers ----
   getAllTransactions(){
     const list = [
       ...this.data.expenses.map(e=>({...e,type:'expense'})),
@@ -1169,27 +1423,6 @@ class AppController{
     return list.sort((a,b)=> new Date(b.date)-new Date(a.date) || new Date(b.createdAt)-new Date(a.createdAt));
   }
 
-  matchesTimeframe(dateStr, timeframe, from, to){
-    const d = new Date(dateStr);
-    switch(timeframe){
-      case 'TODAY': return DateUtil.isToday(dateStr);
-      case 'YESTERDAY': return DateUtil.isYesterday(dateStr);
-      case 'THIS_WEEK': return DateUtil.isThisWeek(dateStr);
-      case 'THIS_MONTH': return DateUtil.isThisMonth(dateStr);
-      case 'THIS_YEAR': return DateUtil.isThisYear(dateStr);
-      case 'LAST_7': return DateUtil.inLastNDays(dateStr,7);
-      case 'LAST_30': return DateUtil.inLastNDays(dateStr,30);
-      case 'LAST_90': return DateUtil.inLastNDays(dateStr,90);
-      case 'LAST_365': return DateUtil.inLastNDays(dateStr,365);
-      case 'CUSTOM':
-        if(from && d < new Date(from)) return false;
-        if(to && d > new Date(to)) return false;
-        return true;
-      default: return true;
-    }
-  }
-
-  // ---- Render orchestration ----
   renderAll(){
     this.renderDashboard();
     this.renderTransactionHistory();
@@ -1249,7 +1482,6 @@ class AppController{
     document.getElementById('dashMonthExpenseCmp').textContent = cmp(monthExpense,lastMonthExpense);
     document.getElementById('dashMonthIncomeCmp').textContent = cmp(monthIncome,lastMonthIncome);
 
-    // Budget
     const budgetLimit = d.budget.monthlyLimit||0;
     const budgetRemaining = Math.max(0, budgetLimit-monthExpense);
     const pct = budgetLimit>0 ? Math.min(150, Math.round((monthExpense/budgetLimit)*100)) : 0;
@@ -1269,7 +1501,6 @@ class AppController{
       warnEl.textContent = `⚠️ Approaching budget limit — ${this.fmt(budgetRemaining)} left.`;
     } else { warnEl.style.display='none'; }
 
-    // Quick stats
     const maxExp = d.expenses.length ? Math.max(...d.expenses.map(e=>Number(e.amount))) : 0;
     const maxInc = d.income.length ? Math.max(...d.income.map(i=>Number(i.amount))) : 0;
     document.getElementById('statLargestExpense').textContent = this.fmt(maxExp);
@@ -1285,7 +1516,6 @@ class AppController{
 
     this.renderCashFlowChart();
 
-    // Recent transactions
     const recentEl = document.getElementById('dashRecentTxList');
     const recentTen = all.slice(0,10);
     recentEl.innerHTML = recentTen.length ? recentTen.map(t=>this.createTxCardHTML(t)).join('') :
@@ -1379,12 +1609,37 @@ class AppController{
     const sortOrder = document.getElementById('sortOrder').value;
     const from = document.getElementById('filterDateFrom').value;
     const to = document.getElementById('filterDateTo').value;
+    const nDays = document.getElementById('historyNDaysInput')?.value || 45;
 
-    // Build chronological (ascending) list first to compute running balance, then filter/sort for display
+    // Validate Custom Range
+    const errEl = document.getElementById('historyDateError');
+    if(filterTime==='CUSTOM' && from && to && new Date(from) > new Date(to)){
+      errEl.textContent = "Error: 'From' date cannot be after 'To' date.";
+      errEl.style.display = 'block';
+      document.getElementById('fullTxList').innerHTML = `<div class="empty-state card"><p>Please correct date range.</p></div>`;
+      document.getElementById('txCountIndicator').textContent = "Showing 0 transactions";
+      document.getElementById('historyBalanceCard').style.display = 'none';
+      return;
+    } else {
+      if(errEl) errEl.style.display = 'none';
+    }
+
     const chronological = [...this.getAllTransactions()].sort((a,b)=> new Date(a.date)-new Date(b.date) || new Date(a.createdAt)-new Date(b.createdAt));
     let running = { cash:Number(this.data.settings.startingCash)||0, bank:Number(this.data.settings.startingBank)||0, savings:Number(this.data.settings.startingSavings)||0 };
+    
+    // Track opening balance before filtered period starts
+    const { start: rangeStart, end: rangeEnd } = DateFilterEngine.getRange(filterTime, from, to, nDays);
+    let openingNetWorth = running.cash + running.bank + running.savings;
+    let openingRecorded = false;
+
     const withBalance = chronological.map(t=>{
       const amt = Number(t.amount)||0;
+      const tDate = new Date(t.date);
+      if(!openingRecorded && tDate >= rangeStart){
+        openingNetWorth = running.cash + running.bank + running.savings;
+        openingRecorded = true;
+      }
+
       if(t.type==='expense') running[t.wallet==='bank'?'bank':'cash'] -= amt;
       else if(t.type==='income') running[t.wallet==='bank'?'bank':'cash'] += amt;
       else if(t.type==='transfer'){ running[t.wallet]-=amt; running[t.toWallet]+=amt; }
@@ -1392,6 +1647,10 @@ class AppController{
       else if(t.type==='savings_withdrawal'){ running.savings-=amt; running[t.toWallet]+=amt; }
       return { ...t, balanceAfter: running.cash+running.bank+running.savings };
     });
+
+    if(!openingRecorded && filterTime !== 'ALL'){
+      openingNetWorth = running.cash + running.bank + running.savings;
+    }
 
     let list = withBalance;
     if(filterType!=='ALL') list = list.filter(i=>i.type===filterType);
@@ -1402,7 +1661,9 @@ class AppController{
     }
     if(!isNaN(amountMin)) list = list.filter(i=>Number(i.amount)>=amountMin);
     if(!isNaN(amountMax)) list = list.filter(i=>Number(i.amount)<=amountMax);
-    list = list.filter(item=>this.matchesTimeframe(item.date, filterTime, from, to));
+    
+    list = list.filter(item=>DateFilterEngine.matches(item.date, filterTime, from, to, nDays));
+
     if(keyword){
       list = list.filter(i=>{
         return (i.category||'').toLowerCase().includes(keyword) ||
@@ -1412,6 +1673,7 @@ class AppController{
           String(i.amount).includes(keyword);
       });
     }
+
     list.sort((a,b)=>{
       if(sortOrder==='NEWEST') return new Date(b.date)-new Date(a.date) || new Date(b.createdAt)-new Date(a.createdAt);
       if(sortOrder==='OLDEST') return new Date(a.date)-new Date(b.date) || new Date(a.createdAt)-new Date(b.createdAt);
@@ -1419,6 +1681,28 @@ class AppController{
       if(sortOrder==='AMOUNT_LOW') return a.amount-b.amount;
       return 0;
     });
+
+    const totalY = this.getAllTransactions().length;
+    document.getElementById('txCountIndicator').textContent = `Showing ${list.length} of ${totalY} transactions`;
+
+    // Calculate period net and closing balance for filtered list
+    let periodIncome = 0, periodExpense = 0;
+    list.forEach(t=>{
+      if(t.type==='income') periodIncome += Number(t.amount);
+      if(t.type==='expense') periodExpense += Number(t.amount);
+    });
+    const periodNet = periodIncome - periodExpense;
+    const closingBal = openingNetWorth + periodNet; // Approximate closing balance for filtered items
+
+    const balanceCard = document.getElementById('historyBalanceCard');
+    if(filterTime !== 'ALL'){
+      balanceCard.style.display = 'block';
+      document.getElementById('histOpeningBal').textContent = this.fmt(openingNetWorth);
+      document.getElementById('histPeriodNet').textContent = this.fmt(periodNet);
+      document.getElementById('histClosingBal').textContent = this.fmt(closingBal);
+    } else {
+      balanceCard.style.display = 'none';
+    }
 
     const container = document.getElementById('fullTxList');
     const totalPages = Math.max(1, Math.ceil(list.length/this.pageSize));
@@ -1444,7 +1728,6 @@ class AppController{
   }
   gotoPage(p){ this.historyPage=p; this.renderTransactionHistory(); }
 
-  // ---- Budget panel ----
   renderBudgetPanel(){
     document.getElementById('budgetLimitInput').value = this.data.budget.monthlyLimit||0;
     document.getElementById('budgetDailyInput').value = this.data.budget.dailyLimit||0;
@@ -1490,22 +1773,61 @@ class AppController{
   removeCatBudget(cat){ delete this.data.budget.categoryBudgets[cat]; this.persist(); this.renderBudgetPanel(); }
   removeWalletBudget(w){ delete this.data.budget.walletBudgets[w]; this.persist(); this.renderBudgetPanel(); }
 
-  // ---- Analytics ----
-  filterByRange(list){
-    return list.filter(t=>this.matchesTimeframe(t.date, this.analyticsRange));
+  // ---- Analytics (with filters, custom range, and period comparison) ----
+  getFilteredTransactionsForAnalytics(){
+    const timeframe = document.getElementById('analyticsTimeframe').value;
+    const type = document.getElementById('analyticsFilterType').value;
+    const wallet = document.getElementById('analyticsFilterWallet').value;
+    const categoryFilter = document.getElementById('analyticsFilterCategory').value;
+    const from = document.getElementById('analyticsDateFrom').value;
+    const to = document.getElementById('analyticsDateTo').value;
+    const nDays = document.getElementById('analyticsNDaysInput').value;
+
+    const errEl = document.getElementById('analyticsErrorMsg');
+    if(timeframe==='CUSTOM' && from && to && new Date(from) > new Date(to)){
+      errEl.textContent = "Error: 'From' date cannot be after 'To' date.";
+      errEl.style.display = 'block';
+      return { income: [], expenses: [], ledger: [] };
+    } else {
+      if(errEl) errEl.style.display = 'none';
+    }
+
+    const matchesFilter = (t)=>{
+      if(!DateFilterEngine.matches(t.date, timeframe, from, to, nDays)) return false;
+      if(wallet !== 'ALL' && t.wallet !== wallet && t.toWallet !== wallet) return false;
+      if(categoryFilter !== 'ALL'){
+        if(categoryFilter.startsWith('cat:') && t.category !== categoryFilter.slice(4)) return false;
+        if(categoryFilter.startsWith('src:') && t.source !== categoryFilter.slice(4)) return false;
+      }
+      return true;
+    };
+
+    let income = this.data.income.filter(matchesFilter);
+    let expenses = this.data.expenses.filter(matchesFilter);
+    let ledger = this.data.ledger.filter(matchesFilter);
+
+    if(type !== 'ALL'){
+      if(type === 'expense') { income = []; ledger = []; }
+      else if(type === 'income') { expenses = []; ledger = []; }
+      else if(type === 'transfer') { income = []; expenses = []; ledger = ledger.filter(l=>l.type==='transfer'); }
+      else if(type === 'savings_deposit') { income = []; expenses = []; ledger = ledger.filter(l=>l.type==='savings_deposit'); }
+      else if(type === 'savings_withdrawal') { income = []; expenses = []; ledger = ledger.filter(l=>l.type==='savings_withdrawal'); }
+    }
+
+    return { income, expenses, ledger };
   }
 
   renderAnalytics(){
-    const income = this.filterByRange(this.data.income);
-    const expenses = this.filterByRange(this.data.expenses);
-    const ledger = this.filterByRange(this.data.ledger);
-    const all = [...income,...expenses,...ledger];
+    const { income, expenses, ledger } = this.getFilteredTransactionsForAnalytics();
+    const all = [...income, ...expenses, ...ledger];
     const w = StorageService.recomputeWallets(this.data);
 
     const totalIncome = income.reduce((s,i)=>s+Number(i.amount),0);
     const totalExpense = expenses.reduce((s,e)=>s+Number(e.amount),0);
     const totalSavingsDeposit = ledger.filter(t=>t.type==='savings_deposit').reduce((s,t)=>s+Number(t.amount),0);
     const totalSavingsWithdraw = ledger.filter(t=>t.type==='savings_withdrawal').reduce((s,t)=>s+Number(t.amount),0);
+    const netSavings = totalIncome - totalExpense;
+
     const maxExp = expenses.length?Math.max(...expenses.map(e=>Number(e.amount))):0;
     const maxInc = income.length?Math.max(...income.map(i=>Number(i.amount))):0;
     const avgExp = expenses.length ? totalExpense/expenses.length : 0;
@@ -1513,7 +1835,7 @@ class AppController{
 
     const dayCount = Math.max(1, new Set(expenses.map(e=>DateUtil.dayKey(e.date))).size);
     const walletCount = {cash:0,bank:0,savings:0};
-    [...income,...expenses].forEach(t=>{ walletCount[t.wallet]=(walletCount[t.wallet]||0)+1; });
+    [...income,...expenses].forEach(t=>{ if(t.wallet) walletCount[t.wallet]=(walletCount[t.wallet]||0)+1; });
     ledger.forEach(t=>{ if(t.wallet) walletCount[t.wallet]=(walletCount[t.wallet]||0)+1; if(t.toWallet) walletCount[t.toWallet]=(walletCount[t.toWallet]||0)+1; });
     const mostUsedWallet = Object.entries(walletCount).sort((a,b)=>b[1]-a[1])[0];
 
@@ -1527,9 +1849,12 @@ class AppController{
       ['Transactions Count', all.length], ['Daily Average Spend', this.fmt(totalExpense/dayCount)],
       ['Monthly Savings Rate', totalIncome>0?Math.round(((totalIncome-totalExpense)/totalIncome)*100)+'%':'0%'],
       ['Monthly Expense Rate', totalIncome>0?Math.round((totalExpense/totalIncome)*100)+'%':'0%'],
-      ['Most Used Wallet', mostUsedWallet ? `${WALLET_META[mostUsedWallet[0]].icon} ${WALLET_META[mostUsedWallet[0]].label}` : '—']
+      ['Most Used Wallet', mostUsedWallet ? `${WALLET_META[mostUsedWallet[0]]?.icon||''} ${WALLET_META[mostUsedWallet[0]]?.label||mostUsedWallet[0]}` : '—']
     ];
     document.getElementById('analyticsKeyMetrics').innerHTML = metrics.map(([k,v])=>`<div><span>${k}</span><strong>${v}</strong></div>`).join('');
+
+    // Period Comparison calculation
+    this.renderPeriodComparison();
 
     this.renderCategoryChart(expenses);
     this.renderSourceChart(income);
@@ -1539,6 +1864,57 @@ class AppController{
     this.renderStackedChart();
     this.renderSavingsTrendChart();
     this.renderTopLists(expenses, income);
+  }
+
+  renderPeriodComparison(){
+    const timeframe = document.getElementById('analyticsTimeframe').value;
+    const cmpCard = document.getElementById('analyticsComparisonCard');
+    if(timeframe === 'ALL'){
+      cmpCard.style.display = 'none';
+      return;
+    }
+    cmpCard.style.display = 'block';
+    document.getElementById('analyticsCmpLabel').textContent = "Previous Equivalent Period";
+
+    const from = document.getElementById('analyticsDateFrom').value;
+    const to = document.getElementById('analyticsDateTo').value;
+    const nDays = document.getElementById('analyticsNDaysInput').value;
+    const { start: prevStart, end: prevEnd } = DateFilterEngine.getPreviousRange(timeframe, from, to, nDays);
+
+    const matchesPrev = (t)=>{
+      const d = new Date(t.date);
+      return d >= prevStart && d <= prevEnd;
+    };
+
+    const prevInc = this.data.income.filter(matchesPrev).reduce((s,i)=>s+Number(i.amount),0);
+    const prevExp = this.data.expenses.filter(matchesPrev).reduce((s,e)=>s+Number(e.amount),0);
+    const prevNet = prevInc - prevExp;
+    const prevTxCount = this.data.income.filter(matchesPrev).length + this.data.expenses.filter(matchesPrev).length + this.data.ledger.filter(matchesPrev).length;
+    const prevDays = Math.max(1, Math.round((prevEnd - prevStart) / (1000 * 60 * 60 * 24)));
+    const prevAvgDaily = prevExp / prevDays;
+
+    const { income, expenses, ledger } = this.getFilteredTransactionsForAnalytics();
+    const curInc = income.reduce((s,i)=>s+Number(i.amount),0);
+    const curExp = expenses.reduce((s,e)=>s+Number(e.amount),0);
+    const curNet = curInc - curExp;
+    const curTxCount = income.length + expenses.length + ledger.length;
+    const curDays = Math.max(1, new Set(expenses.map(e=>DateUtil.dayKey(e.date))).size);
+    const curAvgDaily = curExp / curDays;
+
+    const pctChg = (cur, prev)=>{
+      if(prev === 0) return cur === 0 ? '0%' : '+100%';
+      const pct = Math.round(((cur - prev) / prev) * 100);
+      return `${pct >= 0 ? '+' : ''}${pct}%`;
+    };
+
+    const cmpGrid = document.getElementById('analyticsComparisonGrid');
+    cmpGrid.innerHTML = `
+      <div><span>Income</span><strong>${this.fmt(curInc)} <span style="font-size:.75rem;color:var(--text-muted)">(${pctChg(curInc, prevInc)})</span></strong></div>
+      <div><span>Expense</span><strong>${this.fmt(curExp)} <span style="font-size:.75rem;color:var(--text-muted)">(${pctChg(curExp, prevExp)})</span></strong></div>
+      <div><span>Net Savings</span><strong>${this.fmt(curNet)} <span style="font-size:.75rem;color:var(--text-muted)">(${pctChg(curNet, prevNet)})</span></strong></div>
+      <div><span>Transactions</span><strong>${curTxCount} <span style="font-size:.75rem;color:var(--text-muted)">(${pctChg(curTxCount, prevTxCount)})</span></strong></div>
+      <div style="grid-column:span 2"><span>Avg Daily Expense</span><strong>${this.fmt(curAvgDaily)} <span style="font-size:.75rem;color:var(--text-muted)">(${pctChg(curAvgDaily, prevAvgDaily)})</span></strong></div>
+    `;
   }
 
   renderTopLists(expenses, income){
@@ -1707,12 +2083,26 @@ class AppController{
     } else if(type==='CUSTOM'){
       titleEl.textContent = "Custom Range Report";
       const from = document.getElementById('reportDateFrom').value, to = document.getElementById('reportDateTo').value;
-      const list = all.filter(t=>this.matchesTimeframe(t.date,'CUSTOM',from,to));
+      const errEl = document.getElementById('reportErrorMsg');
+      if(from && to && new Date(from) > new Date(to)){
+        errEl.textContent = "Error: 'From' date cannot be after 'To' date.";
+        errEl.style.display = 'block';
+        container.innerHTML = `<div class="empty-state"><p>Please correct date range.</p></div>`;
+        return;
+      } else {
+        if(errEl) errEl.style.display = 'none';
+      }
+      const list = all.filter(t=>DateFilterEngine.matches(t.date,'CUSTOM',from,to));
+      html = this.txTableHTML(list, ['Date','Type','Particulars','Wallet','Amount'], t=>[t.date,t.type,t.category||t.source||'-',WALLET_META[t.wallet||t.toWallet]?.label||'-',this.fmt(t.amount)]);
+    } else if(type==='N_DAYS'){
+      titleEl.textContent = "N Days Report";
+      const nDays = document.getElementById('reportNDaysInput').value;
+      const list = all.filter(t=>DateFilterEngine.matches(t.date,'N_DAYS',null,null,nDays));
       html = this.txTableHTML(list, ['Date','Type','Particulars','Wallet','Amount'], t=>[t.date,t.type,t.category||t.source||'-',WALLET_META[t.wallet||t.toWallet]?.label||'-',this.fmt(t.amount)]);
     } else {
       const tf = timeframeMap[type] || 'THIS_MONTH';
       titleEl.textContent = `${type.charAt(0)+type.slice(1).toLowerCase()} Transaction Report`;
-      const list = all.filter(t=>this.matchesTimeframe(t.date, tf));
+      const list = all.filter(t=>DateFilterEngine.matches(t.date, tf));
       html = this.txTableHTML(list, ['Date','Type','Particulars','Wallet','Amount'], t=>[t.date,t.type,t.category||t.source||'-',WALLET_META[t.wallet||t.toWallet]?.label||'-',this.fmt(t.amount)]);
     }
     container.innerHTML = html;
